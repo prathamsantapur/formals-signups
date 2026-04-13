@@ -95,7 +95,7 @@ hr{border:none;border-top:1px solid rgba(0,0,0,.09);margin:14px 0}
 </div>
 <div id="loading" class="loading" style="display:none">Connecting...</div>
 <script>
-var LSK='fdb3';var DU='';var ST={cfg:null,sigs:{}};var CT='status';
+var LSK='fdb3';var DU='https://formals-signups-default-rtdb.firebaseio.com';var ST={cfg:null,sigs:{}};var CT='status';
 var SS={pc:'',house:'',name:'',dn:'',conf:''};var AS=false;var AU=false;var APIN='1234';
 var SH=[{id:'A',name:'House 1',cap:22},{id:'B',name:'House 2',cap:22},{id:'C',name:'House 3',cap:22},{id:'D',name:'House 4',cap:22},{id:'E',name:'House 5',cap:22}];
 var APC=['Fall 2022','Spring 2023','Fall 2023','Spring 2024','Fall 2024','Spring 2025','Fall 2025'];
@@ -197,7 +197,7 @@ function advPC(){var c=ST.cfg;if(!c)return;var nx=c.activeIdx+1;fh('formals/cfg'
 function delSig(id){fd('formals/sigs/'+id).then(function(){return poll();});}
 function clrSigs(){fd('formals/sigs').then(function(){return poll();});}
 function fReset(){if(!confirm('Reset everything?'))return;fd('formals').then(function(){localStorage.removeItem(LSK);location.reload();});}
-window.onload=function(){var s=localStorage.getItem(LSK);if(s&&s.includes('firebaseio.com')){DU=s;document.getElementById('loading').style.display='block';launch();}else{document.getElementById('cfg-screen').style.display='block';}};
+window.onload=function(){document.getElementById('loading').style.display='block';launch();};
 </script>
 </body>
 </html>
