@@ -2,679 +2,202 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Formals Housing Signup</title>
-<script src="https://cdn.jsdelivr.net/npm/firebase@9.22.2/firebase-app-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/firebase@9.22.2/firebase-database-compat.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
-
-  :root {
-    --bg: #f7f6f3;
-    --card: #ffffff;
-    --border: rgba(0,0,0,0.09);
-    --border-med: rgba(0,0,0,0.16);
-    --text: #1a1a1a;
-    --muted: #6b6b6b;
-    --hint: #999;
-    --green: #1a7a52;
-    --green-bg: #e8f7f1;
-    --amber: #8a5e00;
-    --amber-bg: #fff8e6;
-    --red: #a32020;
-    --red-bg: #fff0f0;
-    --blue: #1a4fa0;
-    --blue-bg: #eef3ff;
-    --accent: #1a1a1a;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding-bottom: 40px;
-  }
-
-  .header {
-    background: var(--card);
-    border-bottom: 1px solid var(--border);
-    padding: 16px 20px 14px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-
-  .header h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
-  .header p { font-size: 13px; color: var(--muted); margin-top: 2px; }
-
-  .tabs {
-    display: flex;
-    background: var(--card);
-    border-bottom: 1px solid var(--border);
-    padding: 0 20px;
-  }
-
-  .tab {
-    flex: 1;
-    padding: 12px 0;
-    border: none;
-    background: none;
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--muted);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: color 0.15s, border-color 0.15s;
-  }
-
-  .tab.active { color: var(--text); border-bottom-color: var(--text); }
-
-  .content { padding: 16px 16px 0; max-width: 520px; margin: 0 auto; }
-
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px 16px;
-    margin-bottom: 10px;
-  }
-
-  .label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 6px;
-    margin-top: 14px;
-    display: block;
-  }
-
-  .label:first-child { margin-top: 0; }
-
-  input[type=text], select {
-    width: 100%;
-    padding: 11px 13px;
-    border: 1px solid var(--border-med);
-    border-radius: 9px;
-    font-family: inherit;
-    font-size: 15px;
-    background: var(--card);
-    color: var(--text);
-    outline: none;
-    appearance: none;
-    -webkit-appearance: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-
-  input[type=text]:focus, select:focus {
-    border-color: #555;
-    box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
-  }
-
-  .house-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .house-btn {
-    padding: 11px 12px;
-    border: 1px solid var(--border-med);
-    border-radius: 10px;
-    background: var(--card);
-    cursor: pointer;
-    text-align: left;
-    font-family: inherit;
-    transition: all 0.12s;
-  }
-
-  .house-btn:hover:not(:disabled) { border-color: #888; background: #fafafa; }
-  .house-btn.selected { border: 2px solid var(--text); background: #f5f5f5; }
-  .house-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .house-btn .hname { font-size: 14px; font-weight: 600; color: var(--text); display: block; }
-  .house-btn .hcap { font-size: 12px; margin-top: 2px; display: block; }
-  .spots-ok { color: var(--green); }
-  .spots-low { color: var(--amber); }
-  .spots-full { color: var(--red); }
-
-  .bar-wrap { height: 5px; background: var(--bg); border-radius: 3px; margin-top: 6px; overflow: hidden; }
-  .bar { height: 100%; border-radius: 3px; transition: width 0.4s; }
-  .bar-ok { background: #1a7a52; }
-  .bar-low { background: #e8a000; }
-  .bar-full { background: #c0392b; }
-
-  .btn {
-    display: block;
-    width: 100%;
-    padding: 13px;
-    border: none;
-    border-radius: 10px;
-    font-family: inherit;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 12px;
-    transition: opacity 0.1s, transform 0.1s;
-  }
-
-  .btn:active { transform: scale(0.98); opacity: 0.85; }
-  .btn-dark { background: #1a1a1a; color: #fff; }
-  .btn-green { background: #1a7a52; color: #fff; }
-  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border-med); }
-  .btn-red-outline { background: var(--red-bg); color: var(--red); border: 1px solid rgba(163,32,32,0.2); }
-
-  .banner {
-    border-radius: 10px;
-    padding: 11px 14px;
-    font-size: 14px;
-    font-weight: 500;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .banner-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(138,94,0,0.2); }
-  .banner-green { background: var(--green-bg); color: var(--green); border: 1px solid rgba(26,122,82,0.2); }
-  .banner-gray { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
-  .banner-blue { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(26,79,160,0.2); }
-
-  .msg { padding: 10px 13px; border-radius: 9px; font-size: 14px; margin-top: 10px; }
-  .msg-error { background: var(--red-bg); color: var(--red); border: 1px solid rgba(163,32,32,0.2); }
-  .msg-success { background: var(--green-bg); color: var(--green); border: 1px solid rgba(26,122,82,0.2); }
-
-  .pc-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 9px 13px;
-    border-radius: 9px;
-    border: 1px solid var(--border);
-    margin-bottom: 5px;
-    font-size: 14px;
-    background: var(--card);
-  }
-
-  .pc-item.is-active { background: var(--amber-bg); border-color: rgba(138,94,0,0.25); font-weight: 600; color: var(--amber); }
-  .pc-item.is-done { background: var(--bg); color: var(--muted); }
-
-  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; flex-shrink: 0; }
-  .dot-active { background: #e8a000; }
-  .dot-done { background: #1a7a52; }
-  .dot-wait { background: #ccc; }
-
-  .pc-tag { font-size: 11px; color: var(--muted); text-align: right; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 16px 0 8px; }
-
-  .setup-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
-  .setup-row input { flex: 1; }
-  .setup-cap { width: 75px !important; flex: none !important; }
-
-  .del-btn { background: none; border: none; cursor: pointer; color: #bbb; font-size: 18px; padding: 0 6px; border-radius: 4px; transition: color 0.1s; }
-  .del-btn:hover { color: var(--red); }
-
-  .sig-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-top: 1px solid var(--border); }
-  .sig-info { font-size: 13px; }
-  .sig-pc { font-weight: 600; color: var(--text); }
-  .sig-detail { color: var(--muted); font-size: 12px; }
-
-  .total-badge { display: inline-block; background: var(--bg); border-radius: 20px; padding: 2px 10px; font-size: 12px; color: var(--muted); margin-left: 8px; }
-
-  .sync-note { font-size: 11px; color: var(--hint); text-align: right; margin-top: 6px; }
-
-  .loading { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
-
-  .step { display: flex; gap: 10px; margin-bottom: 10px; }
-  .step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--text); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
-  .step-text { font-size: 14px; color: var(--text); line-height: 1.5; }
-
-  .checkbox-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-  .checkbox-row input[type=checkbox] { width: 18px; height: 18px; accent-color: #1a1a1a; cursor: pointer; flex-shrink: 0; }
-  .checkbox-row label { font-size: 14px; color: var(--text); cursor: pointer; }
-
-  hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
-
-  /* Firebase config notice */
-  .config-screen { padding: 24px 20px; max-width: 480px; margin: 0 auto; }
-  .config-screen h2 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
-  .config-screen p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
-  .config-input-group { margin-bottom: 10px; }
-  .config-input-group label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); display: block; margin-bottom: 5px; }
-  .config-input-group input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-med); border-radius: 8px; font-family: inherit; font-size: 14px; background: var(--card); color: var(--text); outline: none; }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f2;color:#1a1a1a;min-height:100vh;padding-bottom:40px}
+.header{background:#fff;border-bottom:1px solid rgba(0,0,0,0.09);padding:14px 18px;position:sticky;top:0;z-index:10}
+.header h1{font-size:17px;font-weight:600}
+.header p{font-size:13px;color:#666;margin-top:2px}
+.tabs{display:flex;background:#fff;border-bottom:1px solid rgba(0,0,0,0.09)}
+.tab{flex:1;padding:12px 0;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;color:#888;cursor:pointer;border-bottom:2px solid transparent}
+.tab.active{color:#1a1a1a;border-bottom-color:#1a1a1a}
+.content{padding:14px 14px 0;max-width:500px;margin:0 auto}
+.card{background:#fff;border:1px solid rgba(0,0,0,0.09);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.lbl{display:block;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px}
+.lbl:first-child{margin-top:0}
+input[type=text],select{width:100%;padding:11px 13px;border:1px solid rgba(0,0,0,0.18);border-radius:9px;font-family:inherit;font-size:15px;background:#fff;color:#1a1a1a;outline:none;-webkit-appearance:none;appearance:none}
+input:focus,select:focus{border-color:#555;box-shadow:0 0 0 3px rgba(0,0,0,0.06)}
+.house-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hbtn{padding:11px 12px;border:1px solid rgba(0,0,0,0.15);border-radius:10px;background:#fff;cursor:pointer;text-align:left;font-family:inherit;transition:all .12s}
+.hbtn:hover:not(:disabled){border-color:#888}
+.hbtn.sel{border:2px solid #1a1a1a;background:#f5f5f5}
+.hbtn:disabled{opacity:.38;cursor:not-allowed}
+.hbtn .hn{font-size:14px;font-weight:600;display:block}
+.hbtn .hc{font-size:12px;margin-top:2px;display:block}
+.ok{color:#1a7a52}.low{color:#8a5e00}.full{color:#a32020}
+.bar-wrap{height:5px;background:#eee;border-radius:3px;margin-top:6px;overflow:hidden}
+.bar{height:100%;border-radius:3px;transition:width .4s}
+.b-ok{background:#1a7a52}.b-low{background:#e8a000}.b-full{background:#c0392b}
+.btn{display:block;width:100%;padding:13px;border:none;border-radius:10px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;margin-top:10px;transition:opacity .1s,transform .1s}
+.btn:active{transform:scale(.98);opacity:.85}
+.btn-dark{background:#1a1a1a;color:#fff}
+.btn-green{background:#1a7a52;color:#fff}
+.btn-out{background:transparent;color:#1a1a1a;border:1px solid rgba(0,0,0,0.18)}
+.btn-red{background:#fff0f0;color:#a32020;border:1px solid rgba(163,32,32,.2)}
+.ban{border-radius:10px;padding:11px 14px;font-size:14px;font-weight:500;margin-bottom:12px}
+.ban-amber{background:#fff8e6;color:#7a5000;border:1px solid rgba(138,94,0,.2)}
+.ban-green{background:#e8f7f1;color:#1a7a52;border:1px solid rgba(26,122,82,.2)}
+.msg{padding:10px 13px;border-radius:9px;font-size:14px;margin-top:10px}
+.err{background:#fff0f0;color:#a32020;border:1px solid rgba(163,32,32,.2)}
+.suc{background:#e8f7f1;color:#1a7a52;border:1px solid rgba(26,122,82,.2)}
+.pc-item{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:9px;border:1px solid rgba(0,0,0,.09);margin-bottom:5px;font-size:14px;background:#fff}
+.pc-active{background:#fff8e6!important;border-color:rgba(138,94,0,.25)!important;font-weight:600;color:#7a5000}
+.pc-done{background:#f5f5f2!important;color:#999}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:8px}
+.d-a{background:#e8a000}.d-d{background:#1a7a52}.d-w{background:#ccc}
+.sig-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid rgba(0,0,0,.07)}
+.del-btn{background:none;border:none;cursor:pointer;color:#bbb;font-size:20px;padding:0 6px;line-height:1}
+.del-btn:hover{color:#a32020}
+.sec{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#888;margin:14px 0 8px}
+.chk-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.chk-row input{width:17px;height:17px;accent-color:#1a1a1a;cursor:pointer;flex-shrink:0}
+.chk-row label{font-size:14px;cursor:pointer}
+.setup-row{display:flex;gap:8px;margin-bottom:8px}
+.cap-input{width:72px;flex:none}
+.sync{font-size:11px;color:#aaa;text-align:right;margin-top:6px}
+hr{border:none;border-top:1px solid rgba(0,0,0,.09);margin:14px 0}
+.cfg-screen{padding:24px 18px;max-width:460px;margin:0 auto}
+.cfg-screen h2{font-size:20px;font-weight:600;margin-bottom:8px}
+.cfg-screen p{font-size:14px;color:#666;line-height:1.6;margin-bottom:16px}
+.cfg-field{margin-bottom:10px}
+.cfg-field label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#888;display:block;margin-bottom:5px}
+.cfg-field input{width:100%;padding:10px 12px;border:1px solid rgba(0,0,0,.18);border-radius:8px;font-family:inherit;font-size:14px;outline:none;background:#fff}
+.loading{text-align:center;padding:60px 20px;font-size:14px;color:#888}
+.pc-tag{font-size:11px;color:#999;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{display:inline-block;background:#f0f0ee;border-radius:20px;padding:2px 10px;font-size:12px;color:#888;margin-left:8px}
 </style>
 </head>
 <body>
-
-<!-- CONFIG SCREEN — shown only if Firebase not yet set up -->
-<div id="configScreen" style="display:none">
-  <div class="config-screen">
-    <h2>One-time setup</h2>
-    <p>Paste your Firebase project details below to enable real-time sync across all devices. You only do this once.</p>
-    <div class="config-input-group">
+<div id="cfg-screen" style="display:none">
+  <div class="cfg-screen">
+    <h2>Connect to Firebase</h2>
+    <p>Paste your Firebase Realtime Database URL to sync signups across all devices in real time.</p>
+    <div class="cfg-field">
       <label>Firebase Database URL</label>
-      <input type="text" id="cfgDbUrl" placeholder="https://your-project-default-rtdb.firebaseio.com" />
+      <input type="text" id="cfgUrl" placeholder="https://your-project-default-rtdb.firebaseio.com" />
     </div>
-    <div class="config-input-group">
-      <label>Firebase API Key</label>
-      <input type="text" id="cfgApiKey" placeholder="AIzaSy..." />
-    </div>
-    <div class="config-input-group">
-      <label>Project ID</label>
-      <input type="text" id="cfgProjectId" placeholder="your-project-id" />
-    </div>
-    <div id="cfgError" class="msg msg-error" style="display:none"></div>
-    <button class="btn btn-dark" onclick="saveFirebaseConfig()">Connect &amp; launch</button>
-
-    <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
-      <p style="font-size:13px;color:var(--muted);margin-bottom:10px">How to get these values:</p>
-      <div class="step"><div class="step-num">1</div><div class="step-text">Go to <strong>console.firebase.google.com</strong> → Create project (any name, disable Analytics)</div></div>
-      <div class="step"><div class="step-num">2</div><div class="step-text">Click <strong>Build → Realtime Database → Create Database</strong> → choose any location → Start in <em>test mode</em></div></div>
-      <div class="step"><div class="step-num">3</div><div class="step-text">Go to <strong>Project Settings</strong> (gear icon) → scroll to "Your apps" → click &lt;/&gt; Web → register app → copy <strong>apiKey</strong>, <strong>projectId</strong>, and <strong>databaseURL</strong></div></div>
-    </div>
+    <div id="cfgErr" class="msg err" style="display:none"></div>
+    <button class="btn btn-dark" onclick="connectFirebase()">Connect</button>
+    <hr>
+    <p style="font-size:13px;color:#888">Find this in Firebase Console &rarr; Realtime Database &mdash; it is the URL at the top of the page.</p>
   </div>
 </div>
-
-<!-- MAIN APP -->
-<div id="mainApp" style="display:none">
-  <div class="header">
-    <h1 id="headerTitle">Formals Housing Signup</h1>
-    <p id="headerSub">Loading...</p>
-  </div>
+<div id="main-app" style="display:none">
+  <div class="header"><h1>Formals Housing Signup</h1><p id="hdr-sub"></p></div>
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('status',this)">Status</button>
-    <button class="tab" onclick="switchTab('signup',this)">Sign Up</button>
-    <button class="tab" onclick="switchTab('admin',this)">Admin</button>
+    <button class="tab active" onclick="go('status',this)">Status</button>
+    <button class="tab" onclick="go('signup',this)">Sign Up</button>
+    <button class="tab" onclick="go('admin',this)">Admin</button>
   </div>
-  <div class="content" id="tabContent"></div>
+  <div class="content" id="page"></div>
 </div>
-
-<div id="loadingScreen" class="loading" style="display:none">Loading...</div>
-
+<div id="loading" class="loading" style="display:none">Connecting...</div>
 <script>
-// ─── Firebase config stored in localStorage ───
-const LS_KEY = "formals-fb-config";
-let db = null;
-let appState = { cfg: null, sigs: [] };
-let listeners = [];
-
-function getSavedConfig() {
-  try { return JSON.parse(localStorage.getItem(LS_KEY)); } catch { return null; }
+var LSK='fdb3';var DU='';var ST={cfg:null,sigs:{}};var CT='status';
+var SS={pc:'',house:'',name:'',dn:'',conf:''};var AS=false;
+var SH=[{id:'A',name:'House 1',cap:22},{id:'B',name:'House 2',cap:22},{id:'C',name:'House 3',cap:22},{id:'D',name:'House 4',cap:22},{id:'E',name:'House 5',cap:22}];
+var APC=['Fall 2022','Spring 2023','Fall 2023','Spring 2024','Fall 2024','Spring 2025','Fall 2025'];
+var SP=APC.map(function(n){return{name:n,on:true};});
+function fg(p){return fetch(DU+'/'+p+'.json').then(function(r){return r.json();});}
+function fs(p,v){return fetch(DU+'/'+p+'.json',{method:'PUT',body:JSON.stringify(v)});}
+function fp(p,v){return fetch(DU+'/'+p+'.json',{method:'POST',body:JSON.stringify(v)}).then(function(r){return r.json();});}
+function fd(p){return fetch(DU+'/'+p+'.json',{method:'DELETE'});}
+function fh(p,v){return fetch(DU+'/'+p+'.json',{method:'PATCH',body:JSON.stringify(v)});}
+function cfgErr(m){var e=document.getElementById('cfgErr');e.textContent=m;e.style.display='block';}
+function connectFirebase(){
+  var url=document.getElementById('cfgUrl').value.trim().replace(/\/+$/,'');
+  if(!url||!url.includes('firebaseio.com')){cfgErr('Paste a valid Firebase Database URL.');return;}
+  DU=url;
+  fg('formals/cfg').then(function(){localStorage.setItem(LSK,url);launch();}).catch(function(){DU='';cfgErr('Could not connect. Check the URL and make sure test mode is on.');});
 }
-
-function saveFirebaseConfig() {
-  const url = document.getElementById('cfgDbUrl').value.trim();
-  const key = document.getElementById('cfgApiKey').value.trim();
-  const pid = document.getElementById('cfgProjectId').value.trim();
-  if (!url || !key || !pid) { showCfgError("Fill in all three fields."); return; }
-  const conf = { databaseURL: url, apiKey: key, projectId: pid, appId: "1:0:web:0" };
-  localStorage.setItem(LS_KEY, JSON.stringify(conf));
-  initFirebase(conf);
+function launch(){
+  document.getElementById('cfg-screen').style.display='none';
+  document.getElementById('loading').style.display='block';
+  poll().then(function(){document.getElementById('loading').style.display='none';document.getElementById('main-app').style.display='block';setInterval(poll,4000);});
 }
-
-function showCfgError(msg) {
-  const el = document.getElementById('cfgError');
-  el.textContent = msg; el.style.display = 'block';
+function poll(){return Promise.all([fg('formals/cfg'),fg('formals/sigs')]).then(function(r){ST.cfg=r[0];ST.sigs=r[1]||{};render();}).catch(function(){});}
+function sa(){return Object.entries(ST.sigs).map(function(e){return Object.assign({id:e[0]},e[1]);}).sort(function(a,b){return a.ts-b.ts;});}
+function hu(n){return sa().filter(function(s){return s.house===n;}).reduce(function(a,s){return a+s.count;},0);}
+function tp(){return sa().reduce(function(a,s){return a+s.count;},0);}
+function pc(u,c){return Math.min(100,Math.round(u/c*100));}
+function pg(){return document.getElementById('page');}
+function go(t,b){CT=t;document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});b.classList.add('active');render();}
+function render(){var p=pg();if(!p)return;if(CT==='status')rSt(p);else if(CT==='signup')rSg(p);else rAd(p);rHd();}
+function rHd(){var e=document.getElementById('hdr-sub');if(!e)return;var c=ST.cfg;if(!c){e.textContent='Admin setup required';return;}if(c.done){e.textContent='All done!';return;}e.textContent='Now signing up: '+c.pcs[c.activeIdx];}
+function rSt(p){
+  var c=ST.cfg,s=sa();
+  if(!c){p.innerHTML='<div class="card" style="text-align:center;padding:28px;color:#888">Waiting for admin to start signup...</div>';return;}
+  var o='';
+  o+=c.done?'<div class="ban ban-green">All PCs signed up! '+tp()+' people total</div>':'<div class="ban ban-amber">Now signing up: <strong>'+c.pcs[c.activeIdx]+'</strong></div>';
+  o+='<div class="sec">Houses</div>';
+  c.houses.forEach(function(h){var u=hu(h.name),r=h.cap-u,pv=pc(u,h.cap),cl=pv>=100?'full':pv>=70?'low':'ok';o+='<div class="card" style="padding:10px 14px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-weight:600;font-size:14px">'+h.name+'</span><span class="'+cl+'" style="font-size:13px;font-weight:600">'+(r<=0?'Full':r+' left')+'<span style="color:#aaa;font-weight:400;font-size:12px"> / '+h.cap+'</span></span></div><div class="bar-wrap"><div class="bar b-'+cl+'" style="width:'+pv+'%"></div></div></div>';});
+  o+='<div class="sec">PC queue</div>';
+  c.pcs.forEach(function(x,i){var st=i<c.activeIdx?'done':(i===c.activeIdx&&!c.done?'active':'wait');var ps=s.filter(function(s){return s.pc===x;});var pt=ps.reduce(function(a,s){return a+s.count;},0);var tg=pt>0?ps.map(function(s){return s.count+'->'+s.house.replace('House ','');}).join(', ')+' ('+pt+'p)':'';o+='<div class="pc-item'+(st==='active'?' pc-active':st==='done'?' pc-done':'')+'"><div><span class="dot d-'+(st==='active'?'a':st==='done'?'d':'w')+'"></span>'+x+'</div>'+(tg?'<div class="pc-tag">'+tg+'</div>':'')+'</div>';});
+  o+='<div class="sync">Auto-refreshes every 4s</div>';
+  p.innerHTML=o;
 }
-
-function initFirebase(conf) {
-  try {
-    if (!firebase.apps.length) {
-      firebase.initializeApp({ ...conf, authDomain: conf.projectId + ".firebaseapp.com" });
-    }
-    db = firebase.database();
-    document.getElementById('configScreen').style.display = 'none';
-    document.getElementById('loadingScreen').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'block';
-    startListeners();
-  } catch(e) {
-    showCfgError("Could not connect: " + e.message);
+function rSg(p){
+  var c=ST.cfg;
+  if(!c||!c.started){p.innerHTML='<div class="card" style="text-align:center;padding:28px;color:#888">Signup has not started yet.</div>';return;}
+  if(c.done){p.innerHTML='<div class="card" style="text-align:center;padding:28px"><span style="color:#1a7a52;font-weight:600">All PCs have signed up!</span></div>';return;}
+  var act=c.pcs[c.activeIdx];
+  var o='<div class="card"><span class="lbl">Your PC</span><select onchange="SS.pc=this.value;rSg(pg())"><option value="">Select your PC...</option>'+c.pcs.map(function(x){return '<option value="'+x+'"'+(SS.pc===x?' selected':'')+'>'+x+'</option>';}).join('')+'</select>';
+  if(SS.pc&&SS.pc!==act){o+='<div class="msg err">Not '+SS.pc+"'s turn - currently: <strong>"+act+'</strong></div></div>';p.innerHTML=o;return;}
+  if(SS.pc===act){
+    o+='<div class="ban ban-amber" style="margin-top:12px">It\'s '+act+"'s turn!</div>";
+    o+='<span class="lbl">Confirm your PC (type it exactly)</span><input type="text" placeholder="'+act+'" value="'+SS.conf+'" oninput="SS.conf=this.value" />';
+    o+='<span class="lbl">Your name</span><input type="text" placeholder="First Last" value="'+SS.name+'" oninput="SS.name=this.value" />';
+    o+='<span class="lbl">Date\'s name <span style="font-weight:400;text-transform:none;font-size:12px">(leave blank if stag)</span></span><input type="text" placeholder="First Last" value="'+SS.dn+'" oninput="SS.dn=this.value" />';
+    o+='<span class="lbl">Choose a house</span><div class="house-grid">';
+    c.houses.forEach(function(h){var u=hu(h.name),r=h.cap-u,fl=r<=0,cl=fl?'full':r<5?'low':'ok';o+='<button class="hbtn'+(SS.house===h.name?' sel':'')+'" '+(fl?'disabled':'')+' onclick="SS.house=\''+h.name+'\';rSg(pg())"><span class="hn">'+h.name+'</span><span class="hc '+cl+'">'+(fl?'Full':r+' spot'+(r===1?'':'s')+' left')+'</span></button>';});
+    o+='</div><div id="smsg"></div><button class="btn btn-dark" onclick="subSig()">Submit</button>';
   }
+  o+='</div>';p.innerHTML=o;
 }
-
-function startListeners() {
-  db.ref('formals/cfg').on('value', snap => {
-    appState.cfg = snap.val();
-    renderCurrentTab();
-    updateHeader();
-  });
-  db.ref('formals/sigs').on('value', snap => {
-    const val = snap.val();
-    appState.sigs = val ? Object.entries(val).map(([id,v]) => ({...v,id})) : [];
-    appState.sigs.sort((a,b) => a.ts - b.ts);
-    renderCurrentTab();
-  });
+function subSig(){
+  var c=ST.cfg,pc=SS.pc,h=SS.house,n=SS.name,dn=SS.dn,cf=SS.conf;
+  function er(m){var e=document.getElementById('smsg');if(e)e.innerHTML='<div class="msg err">'+m+'</div>';}
+  if(!pc){er('Select your PC.');return;}
+  if(pc!==c.pcs[c.activeIdx]){er('Not your turn yet.');return;}
+  if(cf.trim().toLowerCase()!==pc.toLowerCase()){er('PC confirmation does not match. Type: <strong>'+pc+'</strong>');return;}
+  if(!n.trim()){er('Enter your name.');return;}
+  if(!h){er('Select a house.');return;}
+  var hh=c.houses.find(function(x){return x.name===h;});
+  var u=hu(h),cnt=dn.trim()?2:1;
+  if(u+cnt>hh.cap){er('Only '+(hh.cap-u)+' spot(s) left in '+h+'.');return;}
+  var b=document.querySelector('#page .btn-dark');if(b){b.disabled=true;b.textContent='Saving...';}
+  fp('formals/sigs',{pc:pc,house:h,name:n.trim(),dateName:dn.trim(),count:cnt,ts:Date.now()}).then(function(){SS={pc:'',house:'',name:'',dn:'',conf:''};return poll();}).then(function(){var e=document.getElementById('smsg');if(e)e.innerHTML='<div class="msg suc">Done! '+cnt+' spot'+(cnt>1?'s':'')+' reserved in '+h+'.</div>';setTimeout(function(){rSg(pg());},2500);}).catch(function(){er('Error saving. Try again.');if(b){b.disabled=false;b.textContent='Submit';}});
 }
-
-// ─── Tab routing ───
-let currentTab = 'status';
-function switchTab(name, btn) {
-  currentTab = name;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  renderCurrentTab();
+function rAd(p){
+  var c=ST.cfg;if(!c||AS){rSetup(p);return;}
+  var s=sa(),nx=(!c.done&&c.activeIdx+1<c.pcs.length)?c.pcs[c.activeIdx+1]:null;
+  var o='';
+  if(c.done)o+='<div class="ban ban-green">All done! '+tp()+' people signed up.</div>';
+  else{o+='<div class="ban ban-amber">Active: <strong>'+c.pcs[c.activeIdx]+'</strong> &nbsp;·&nbsp; '+(c.activeIdx+1)+'/'+c.pcs.length+'</div>';o+='<button class="btn btn-green" onclick="advPC()">'+(nx?'Mark done — open '+nx:'Close signup (all done)')+'</button>';}
+  o+='<button class="btn btn-out" style="margin-top:8px" onclick="AS=true;rAd(pg())">Edit setup</button>';
+  o+='<div class="sec">All signups <span class="tag">'+tp()+' people</span></div>';
+  if(!s.length)o+='<div style="font-size:13px;color:#888;padding:4px 0">No signups yet.</div>';
+  else c.houses.forEach(function(h){var hs=s.filter(function(x){return x.house===h.name;});if(!hs.length)return;var tot=hs.reduce(function(a,x){return a+x.count;},0);o+='<div class="card" style="padding:10px 14px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-weight:600;font-size:14px">'+h.name+'</span><span style="font-size:12px;color:#888">'+tot+'/'+h.cap+'</span></div>';hs.forEach(function(x){o+='<div class="sig-row"><div><span style="font-weight:600;font-size:13px">'+x.pc+'</span><span style="color:#888;font-size:12px"> · '+x.name+(x.dateName?' + '+x.dateName:' (stag)')+'</span></div><button class="del-btn" onclick="delSig(\''+x.id+'\')">x</button></div>';});o+='</div>';});
+  o+='<hr><button class="btn btn-red" onclick="if(confirm(\'Clear all signups?\'))clrSigs()">Clear all signups</button><button class="btn btn-red" style="margin-top:6px;opacity:.7" onclick="fReset()">Full reset</button>';
+  p.innerHTML=o;
 }
-function renderCurrentTab() {
-  if (currentTab === 'status') renderStatus();
-  else if (currentTab === 'signup') renderSignup();
-  else renderAdmin();
-  updateHeader();
+function rSetup(p){
+  var o='<div class="card"><span class="lbl" style="margin-top:0">House names & capacities</span>';
+  SH.forEach(function(h,i){o+='<div class="setup-row"><input type="text" value="'+h.name+'" oninput="SH['+i+'].name=this.value" placeholder="House name" /><input type="text" class="cap-input" value="'+h.cap+'" oninput="SH['+i+'].cap=parseInt(this.value)||0" placeholder="Cap" /></div>';});
+  o+='<span class="lbl">Which PCs are attending?</span>';
+  SP.forEach(function(x,i){o+='<div class="chk-row"><input type="checkbox" id="p'+i+'" '+(x.on?'checked':'')+' onchange="SP['+i+'].on=this.checked" /><label for="p'+i+'">'+x.name+'</label></div>';});
+  o+='<div id="smsg2"></div><button class="btn btn-dark" onclick="saveSU()">'+(ST.cfg?'Save & restart':'Start signup')+'</button>';
+  if(ST.cfg)o+='<button class="btn btn-out" onclick="AS=false;rAd(pg())">Cancel</button>';
+  o+='</div>';p.innerHTML=o;
 }
-
-function updateHeader() {
-  const {cfg, sigs} = appState;
-  if (!cfg) { document.getElementById('headerSub').textContent = 'Admin setup required'; return; }
-  if (cfg.done) { document.getElementById('headerSub').textContent = 'All done!'; return; }
-  document.getElementById('headerSub').textContent = 'Now signing up: ' + cfg.pcs[cfg.activeIdx];
-}
-
-// ─── Helpers ───
-function houseUsed(house) {
-  return appState.sigs.filter(s => s.house === house).reduce((a,s) => a + s.count, 0);
-}
-function pct(used, cap) { return Math.min(100, Math.round(used/cap*100)); }
-function totalPeople() { return appState.sigs.reduce((a,s) => a + s.count, 0); }
-
-function el(id) { return document.getElementById(id); }
-function html(id, h) { el(id).innerHTML = h; }
-
-// ─── STATUS TAB ───
-function renderStatus() {
-  const {cfg, sigs} = appState;
-  const tc = el('tabContent');
-  if (!cfg) {
-    tc.innerHTML = `<div class="card" style="text-align:center;padding:28px 16px;color:var(--muted)">Waiting for admin to start signup…</div>`;
-    return;
-  }
-
-  let out = '';
-
-  // Active banner
-  if (!cfg.done) {
-    out += `<div class="banner banner-amber">🏠 Now signing up: <strong>${cfg.pcs[cfg.activeIdx]}</strong></div>`;
-  } else {
-    out += `<div class="banner banner-green">✓ All PCs signed up! Total: ${totalPeople()} people</div>`;
-  }
-
-  // Houses
-  out += `<div class="section-label">Houses</div>`;
-  cfg.houses.forEach(h => {
-    const used = houseUsed(h.name);
-    const rem = h.cap - used;
-    const p = pct(used, h.cap);
-    const cls = p >= 100 ? 'full' : p >= 75 ? 'low' : 'ok';
-    out += `<div class="card" style="padding:11px 14px">
-      <div style="display:flex;justify-content:space-between;align-items:baseline">
-        <span style="font-weight:600;font-size:14px">${h.name}</span>
-        <span class="spots-${cls === 'full' ? 'full' : cls === 'low' ? 'low' : 'ok'}" style="font-size:13px;font-weight:600">
-          ${rem <= 0 ? 'Full' : rem + ' left'}<span style="color:var(--muted);font-weight:400;font-size:12px"> / ${h.cap}</span>
-        </span>
-      </div>
-      <div class="bar-wrap"><div class="bar bar-${cls}" style="width:${p}%"></div></div>
-    </div>`;
-  });
-
-  // PC queue
-  out += `<div class="section-label">PC queue</div>`;
-  cfg.pcs.forEach((pc, i) => {
-    const status = i < cfg.activeIdx ? 'done' : (i === cfg.activeIdx && !cfg.done) ? 'active' : 'wait';
-    const pcSigs = sigs.filter(s => s.pc === pc);
-    const pcTotal = pcSigs.reduce((a,s) => a+s.count, 0);
-    const tag = pcTotal > 0 ? pcSigs.map(s => `${s.count}→${s.house.replace('House ','')}`).join(', ') + ` (${pcTotal}p)` : '';
-    out += `<div class="pc-item${status === 'active' ? ' is-active' : status === 'done' ? ' is-done' : ''}">
-      <div><span class="dot dot-${status === 'active' ? 'active' : status === 'done' ? 'done' : 'wait'}"></span>${pc}</div>
-      ${tag ? `<div class="pc-tag">${tag}</div>` : ''}
-    </div>`;
-  });
-
-  out += `<div class="sync-note">Live — updates automatically</div>`;
-  tc.innerHTML = out;
-}
-
-// ─── SIGNUP TAB ───
-let signupState = { pc: '', house: '', name: '', dateName: '', pcConfirm: '' };
-
-function renderSignup() {
-  const {cfg} = appState;
-  const tc = el('tabContent');
-  if (!cfg || !cfg.started) {
-    tc.innerHTML = `<div class="card" style="text-align:center;padding:28px;color:var(--muted)">Signup hasn't started yet.</div>`;
-    return;
-  }
-  if (cfg.done) {
-    tc.innerHTML = `<div class="card" style="text-align:center;padding:28px"><div style="color:var(--green);font-weight:600">All PCs have signed up!</div></div>`;
-    return;
-  }
-
-  const active = cfg.pcs[cfg.activeIdx];
-
-  let out = `<div class="card">`;
-
-  // PC select
-  out += `<span class="label">Your PC</span>
-  <select id="sPC" onchange="signupState.pc=this.value;renderSignup()">
-    <option value="">Select your PC…</option>
-    ${cfg.pcs.map(pc => `<option value="${pc}"${signupState.pc===pc?' selected':''}>${pc}</option>`).join('')}
-  </select>`;
-
-  // Turn check
-  if (signupState.pc && signupState.pc !== active) {
-    out += `<div class="msg msg-error">It's not ${signupState.pc}'s turn yet — currently: <strong>${active}</strong></div>`;
-    out += `</div>`;
-    tc.innerHTML = out;
-    return;
-  }
-
-  if (signupState.pc === active) {
-    out += `<div class="banner banner-amber" style="margin-top:12px">It's ${active}'s turn!</div>`;
-
-    // PC confirmation question
-    out += `<span class="label">PC confirmation</span>
-    <input type="text" id="sPCConfirm" placeholder="Type your PC (e.g. Fall 2022) to confirm" value="${signupState.pcConfirm}" oninput="signupState.pcConfirm=this.value" />`;
-
-    // Name
-    out += `<span class="label">Your name</span>
-    <input type="text" id="sName" placeholder="First Last" value="${signupState.name}" oninput="signupState.name=this.value" />`;
-
-    // Date name
-    out += `<span class="label">Date's name <span style="font-weight:400;opacity:0.6;text-transform:none">(leave blank if going stag)</span></span>
-    <input type="text" id="sDate" placeholder="First Last" value="${signupState.dateName}" oninput="signupState.dateName=this.value" />`;
-
-    // House
-    out += `<span class="label">Choose a house</span>
-    <div class="house-grid">`;
-    cfg.houses.forEach(h => {
-      const used = houseUsed(h.name);
-      const rem = h.cap - used;
-      const full = rem <= 0;
-      const cls = full ? 'full' : rem < 5 ? 'low' : 'ok';
-      out += `<button class="house-btn${signupState.house===h.name?' selected':''}" ${full?'disabled':''} onclick="signupState.house='${h.name}';renderSignup()">
-        <span class="hname">${h.name}</span>
-        <span class="hcap spots-${cls}">${full ? 'Full' : rem + ' spot' + (rem===1?'':'s') + ' left'}</span>
-      </button>`;
-    });
-    out += `</div>`;
-
-    out += `<div id="signupMsg"></div>`;
-    out += `<button class="btn btn-dark" onclick="submitSignup()">Submit</button>`;
-  }
-
-  out += `</div>`;
-  tc.innerHTML = out;
-}
-
-function submitSignup() {
-  const {cfg} = appState;
-  const {pc, house, name, dateName, pcConfirm} = signupState;
-  const msgEl = el('signupMsg');
-
-  const err = msg => { msgEl.innerHTML = `<div class="msg msg-error">${msg}</div>`; };
-
-  if (!pc) { err('Select your PC.'); return; }
-  if (pc !== cfg.pcs[cfg.activeIdx]) { err("It's not your turn yet."); return; }
-  if (pcConfirm.trim().toLowerCase() !== pc.toLowerCase()) { err('PC confirmation doesn't match. Type exactly: ' + pc); return; }
-  if (!name.trim()) { err('Enter your name.'); return; }
-  if (!house) { err('Select a house.'); return; }
-
-  const houseObj = cfg.houses.find(h => h.name === house);
-  const used = houseUsed(house);
-  const count = dateName.trim() ? 2 : 1;
-
-  if (used + count > houseObj.cap) {
-    err(`Not enough spots in ${house}. Only ${houseObj.cap - used} left.`); return;
-  }
-
-  const sig = { pc, house, name: name.trim(), dateName: dateName.trim(), count, ts: Date.now() };
-  db.ref('formals/sigs').push(sig).then(() => {
-    signupState = { pc: '', house: '', name: '', dateName: '', pcConfirm: '' };
-    msgEl.innerHTML = `<div class="msg msg-success">Done! Reserved ${count} spot${count>1?'s':''} in ${house}.</div>`;
-    setTimeout(renderSignup, 2000);
-  }).catch(e => err('Error: ' + e.message));
-}
-
-// ─── ADMIN TAB ───
-let adminSetupMode = false;
-let setupHouses = [
-  {id:'A',name:'House 1',cap:22},
-  {id:'B',name:'House 2',cap:22},
-  {id:'C',name:'House 3',cap:22},
-  {id:'D',name:'House 4',cap:22},
-  {id:'E',name:'House 5',cap:22},
-];
-const ALL_PCS = ['Fall 2022','Spring 2023','Fall 2023','Spring 2024','Fall 2024','Spring 2025','Fall 2025'];
-let setupPCs = ALL_PCS.map(n => ({name:n,on:true}));
-
-function renderAdmin() {
-  const {cfg, sigs} = appState;
-  const tc = el('tabContent');
-
-  if (!cfg || adminSetupMode) {
-    renderSetup(tc); return;
-  }
-
-  const active = cfg.done ? null : cfg.pcs[cfg.activeIdx];
-  const next = (!cfg.done && cfg.activeIdx+1 < cfg.pcs.length) ? cfg.pcs[cfg.activeIdx+1] : null;
-  const tp = totalPeople();
-
-  let out = '';
-
-  if (cfg.done) {
-    out += `<div class="banner banner-green">✓ All done! ${tp} people signed up.</div>`;
-  } else {
-    out += `<div class="banner banner-amber">Active: <strong>${active}</strong> &nbsp;·&nbsp; ${cfg.activeIdx+1}/${cfg.pcs.length}</div>
-    <button class="btn btn-green" onclick="advancePC()">
-      ${next ? `Mark done — open ${next}` : 'Close signup (all done)'}
-    </button>`;
-  }
-
-  out += `<button class="btn btn-outline" style="margin-top:8px" onclick="adminSetupMode=true;renderAdmin()">Edit setup</button>`;
-
-  // Signups by house
-  out += `<div class="section-label">All signups <span class="total-badge">${tp} people</span></div>`;
-  if (sigs.length === 0) {
-    out += `<div style="font-size:13px;color:var(--muted);padding:4px 0">No signups yet.</div>`;
-  } else {
-    cfg.houses.forEach(h => {
-      const hs = sigs.filter(s => s.house === h.name);
-      if (!hs.length) return;
-      const tot = hs.reduce((a,s) => a+s.count, 0);
-      out += `<div class="card" style="padding:11px 14px;margin-bottom:8px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <span style="font-weight:600;font-size:14px">${h.name}</span>
-          <span style="font-size:12px;color:var(--muted)">${tot}/${h.cap}</span>
-        </div>`;
-      hs.forEach(s => {
-        out += `<div class="sig-row">
-          <div class="sig-info">
-            <span class="sig-pc">${s.pc}</span>
-            <span class="sig-detail"> · ${s.name}${s.dateName ? ' + ' + s.dateName : ' (stag)'}</span>
-          </div>
-          <button class="del-btn" onclick="deleteSig('${s.id}')">×</button>
-        </div>`;
-      });
-      out += `</div>`;
-    });
-  }
-
-  out += `<hr>`;
-  out += `<button class="btn btn-red-outline" onclick="if(confirm('Clear all signups?'))clearSigs()">Clear all signups</button>`;
-  out += `<button class="btn btn-red-outline" style="margin-top:6px;opacity:0.7" onclick="fullReset()">Full reset</button>`;
-
-  tc.innerHTML = out;
-}
-
-function renderSetup(tc) {
-  let out = `<div class="card">
-    <div class="section-label" style="margin-top:0">House names &amp; capacities</div>`;
-
-  setupHouses.forEach((h, i) => {
-    out += `<div class="setup-row">
-      <input type="text" value="${h.name}" oninput="setupHouses[${i}].name=this.value" placeholder="House name" />
-      <input type="text" class="setup-cap" value="${h.cap}" oninput="setupHouses[${i}].cap=parseInt(this.value)||0" placeholder="Cap" />
-    </div>`;
-  });
-
-  out += `<div class="section-label">Which PCs are attending? (oldest → newest)</div>`;
-  setupPCs.forEach((pc, i) => {
-    out += `<div class="checkbox-row">
-      <input type="checkbox" id="pc${i}" ${pc.on?'checked':''} onchange="setupPCs[${i}].on=this.checked" />
-      <label for="pc${i}">${pc.name}</label>
-    </div>`;
-  });
-
-  out += `<div id="setupMsg"></div>`;
-  out += `<button class="btn btn-dark" onclick="saveSetup()">${appState.cfg ? 'Save &amp; restart' : 'Start signup'}</button>`;
-  if (appState.cfg) out += `<button class="btn btn-outline" onclick="adminSetupMode=false;renderAdmin()">Cancel</button>`;
-  out += `</div>`;
-  tc.innerHTML = out;
-}
-
-function saveSetup() {
-  const pcs = setupPCs.filter(p => p.on).map(p => p.name);
-  if (!pcs.length) { el('setupMsg').innerHTML = `<div class="msg msg-error">Select at least one PC.</div>`; return; }
-  const cfg = { houses: setupHouses.map(h => ({...h})), pcs, activeIdx: 0, started: true, done: false };
-  db.ref('formals/cfg').set(cfg);
-  db.ref('formals/sigs').remove();
-  adminSetupMode = false;
-}
-
-function advancePC() {
-  const {cfg} = appState;
-  if (!cfg) return;
-  const next = cfg.activeIdx + 1;
-  if (next >= cfg.pcs.length) db.ref('formals/cfg').update({activeIdx: next, done: true});
-  else db.ref('formals/cfg').update({activeIdx: next});
-}
-
-function deleteSig(id) {
-  db.ref('formals/sigs/' + id).remove();
-}
-
-function clearSigs() { db.ref('formals/sigs').remove(); }
-
-function fullReset() {
-  if (!confirm('Reset everything?')) return;
-  db.ref('formals').remove();
-  localStorage.removeItem(LS_KEY);
-  location.reload();
-}
-
-// ─── Boot ───
-window.onload = () => {
-  const saved = getSavedConfig();
-  if (saved && saved.databaseURL && saved.apiKey) {
-    document.getElementById('loadingScreen').style.display = 'block';
-    initFirebase(saved);
-  } else {
-    document.getElementById('loadingScreen').style.display = 'none';
-    document.getElementById('configScreen').style.display = 'block';
-  }
-};
+function saveSU(){var ps=SP.filter(function(x){return x.on;}).map(function(x){return x.name;});if(!ps.length){var e=document.getElementById('smsg2');if(e)e.innerHTML='<div class="msg err">Select at least one PC.</div>';return;}var cfg={houses:SH.map(function(h){return{id:h.id,name:h.name,cap:h.cap};}),pcs:ps,activeIdx:0,started:true,done:false};fs('formals/cfg',cfg).then(function(){return fd('formals/sigs');}).then(function(){AS=false;return poll();});}
+function advPC(){var c=ST.cfg;if(!c)return;var nx=c.activeIdx+1;fh('formals/cfg',nx>=c.pcs.length?{activeIdx:nx,done:true}:{activeIdx:nx}).then(function(){return poll();});}
+function delSig(id){fd('formals/sigs/'+id).then(function(){return poll();});}
+function clrSigs(){fd('formals/sigs').then(function(){return poll();});}
+function fReset(){if(!confirm('Reset everything?'))return;fd('formals').then(function(){localStorage.removeItem(LSK);location.reload();});}
+window.onload=function(){var s=localStorage.getItem(LSK);if(s&&s.includes('firebaseio.com')){DU=s;document.getElementById('loading').style.display='block';launch();}else{document.getElementById('cfg-screen').style.display='block';}};
 </script>
 </body>
 </html>
