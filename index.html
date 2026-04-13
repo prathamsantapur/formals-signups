@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Formals Housing Signup</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #f7f6f3;
+    --card: #ffffff;
+    --border: rgba(0,0,0,0.09);
+    --border-med: rgba(0,0,0,0.16);
+    --text: #1a1a1a;
+    --muted: #6b6b6b;
+    --hint: #999;
+    --green: #1a7a52;
+    --green-bg: #e8f7f1;
+    --amber: #8a5e00;
+    --amber-bg: #fff8e6;
+    --red: #a32020;
+    --red-bg: #fff0f0;
+    --blue: #1a4fa0;
+    --blue-bg: #eef3ff;
+    --accent: #1a1a1a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  .header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px 14px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .header h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+  .header p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  .tabs {
+    display: flex;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 12px 0;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .tab.active { color: var(--text); border-bottom-color: var(--text); }
+
+  .content { padding: 16px 16px 0; max-width: 520px; margin: 0 auto; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+
+  .label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    margin-top: 14px;
+    display: block;
+  }
+
+  .label:first-child { margin-top: 0; }
+
+  input[type=text], select {
+    width: 100%;
+    padding: 11px 13px;
+    border: 1px solid var(--border-med);
+    border-radius: 9px;
+    font-family: inherit;
+    font-size: 15px;
+    background: var(--card);
+    color: var(--text);
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  input[type=text]:focus, select:focus {
+    border-color: #555;
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
+  }
+
+  .house-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .house-btn {
+    padding: 11px 12px;
+    border: 1px solid var(--border-med);
+    border-radius: 10px;
+    background: var(--card);
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    transition: all 0.12s;
+  }
+
+  .house-btn:hover:not(:disabled) { border-color: #888; background: #fafafa; }
+  .house-btn.selected { border: 2px solid var(--text); background: #f5f5f5; }
+  .house-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .house-btn .hname { font-size: 14px; font-weight: 600; color: var(--text); display: block; }
+  .house-btn .hcap { font-size: 12px; margin-top: 2px; display: block; }
+  .spots-ok { color: var(--green); }
+  .spots-low { color: var(--amber); }
+  .spots-full { color: var(--red); }
+
+  .bar-wrap { height: 5px; background: var(--bg); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .bar { height: 100%; border-radius: 3px; transition: width 0.4s; }
+  .bar-ok { background: #1a7a52; }
+  .bar-low { background: #e8a000; }
+  .bar-full { background: #c0392b; }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: opacity 0.1s, transform 0.1s;
+  }
+
+  .btn:active { transform: scale(0.98); opacity: 0.85; }
+  .btn-dark { background: #1a1a1a; color: #fff; }
+  .btn-green { background: #1a7a52; color: #fff; }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border-med); }
+  .btn-red-outline { background: var(--red-bg); color: var(--red); border: 1px solid rgba(163,32,32,0.2); }
+
+  .banner {
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .banner-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(138,94,0,0.2); }
+  .banner-green { background: var(--green-bg); color: var(--green); border: 1px solid rgba(26,122,82,0.2); }
+  .banner-gray { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+  .banner-blue { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(26,79,160,0.2); }
+
+  .msg { padding: 10px 13px; border-radius: 9px; font-size: 14px; margin-top: 10px; }
+  .msg-error { background: var(--red-bg); color: var(--red); border: 1px solid rgba(163,32,32,0.2); }
+  .msg-success { background: var(--green-bg); color: var(--green); border: 1px solid rgba(26,122,82,0.2); }
+
+  .pc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 13px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    margin-bottom: 5px;
+    font-size: 14px;
+    background: var(--card);
+  }
+
+  .pc-item.is-active { background: var(--amber-bg); border-color: rgba(138,94,0,0.25); font-weight: 600; color: var(--amber); }
+  .pc-item.is-done { background: var(--bg); color: var(--muted); }
+
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; flex-shrink: 0; }
+  .dot-active { background: #e8a000; }
+  .dot-done { background: #1a7a52; }
+  .dot-wait { background: #ccc; }
+
+  .pc-tag { font-size: 11px; color: var(--muted); text-align: right; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 16px 0 8px; }
+
+  .setup-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+  .setup-row input { flex: 1; }
+  .setup-cap { width: 75px !important; flex: none !important; }
+
+  .del-btn { background: none; border: none; cursor: pointer; color: #bbb; font-size: 18px; padding: 0 6px; border-radius: 4px; transition: color 0.1s; }
+  .del-btn:hover { color: var(--red); }
+
+  .sig-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-top: 1px solid var(--border); }
+  .sig-info { font-size: 13px; }
+  .sig-pc { font-weight: 600; color: var(--text); }
+  .sig-detail { color: var(--muted); font-size: 12px; }
+
+  .total-badge { display: inline-block; background: var(--bg); border-radius: 20px; padding: 2px 10px; font-size: 12px; color: var(--muted); margin-left: 8px; }
+
+  .sync-note { font-size: 11px; color: var(--hint); text-align: right; margin-top: 6px; }
+
+  .loading { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
+
+  .step { display: flex; gap: 10px; margin-bottom: 10px; }
+  .step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--text); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .step-text { font-size: 14px; color: var(--text); line-height: 1.5; }
+
+  .checkbox-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .checkbox-row input[type=checkbox] { width: 18px; height: 18px; accent-color: #1a1a1a; cursor: pointer; flex-shrink: 0; }
+  .checkbox-row label { font-size: 14px; color: var(--text); cursor: pointer; }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+  /* Firebase config notice */
+  .config-screen { padding: 24px 20px; max-width: 480px; margin: 0 auto; }
+  .config-screen h2 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+  .config-screen p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
+  .config-input-group { margin-bottom: 10px; }
+  .config-input-group label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); display: block; margin-bottom: 5px; }
+  .config-input-group input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-med); border-radius: 8px; font-family: inherit; font-size: 14px; background: var(--card); color: var(--text); outline: none; }
+</style>
+</head>
+<body>
+
+<!-- CONFIG SCREEN — shown only if Firebase not yet set up -->
+<div id="configScreen" style="display:none">
+  <div class="config-screen">
+    <h2>One-time setup</h2>
+    <p>Paste your Firebase project details below to enable real-time sync across all devices. You only do this once.</p>
+    <div class="config-input-group">
+      <label>Firebase Database URL</label>
+      <input type="text" id="cfgDbUrl" placeholder="https://your-project-default-rtdb.firebaseio.com" />
+    </div>
+    <div class="config-input-group">
+      <label>Firebase API Key</label>
+      <input type="text" id="cfgApiKey" placeholder="AIzaSy..." />
+    </div>
+    <div class="config-input-group">
+      <label>Project ID</label>
+      <input type="text" id="cfgProjectId" placeholder="your-project-id" />
+    </div>
+    <div id="cfgError" class="msg msg-error" style="display:none"></div>
+    <button class="btn btn-dark" onclick="saveFirebaseConfig()">Connect &amp; launch</button>
+
+    <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:10px">How to get these values:</p>
+      <div class="step"><div class="step-num">1</div><div class="step-text">Go to <strong>console.firebase.google.com</strong> → Create project (any name, disable Analytics)</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Click <strong>Build → Realtime Database → Create Database</strong> → choose any location → Start in <em>test mode</em></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Go to <strong>Project Settings</strong> (gear icon) → scroll to "Your apps" → click &lt;/&gt; Web → register app → copy <strong>apiKey</strong>, <strong>projectId</strong>, and <strong>databaseURL</strong></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" style="display:none">
+  <div class="header">
+    <h1 id="headerTitle">Formals Housing Signup</h1>
+    <p id="headerSub">Loading...</p>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('status',this)">Status</button>
+    <button class="tab" onclick="switchTab('signup',this)">Sign Up</button>
+    <button class="tab" onclick="switchTab('admin',this)">Admin</button>
+  </div>
+  <div class="content" id="tabContent"></div>
+</div>
+
+<div id="loadingScreen" class="loading">Loading...</div>
+
+<script>
+// ─── Firebase config stored in localStorage ───
+const LS_KEY = "formals-fb-config";
+let db = null;
+let appState = { cfg: null, sigs: [] };
+let listeners = [];
+
+function getSavedConfig() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)); } catch { return null; }
+}
+
+function saveFirebaseConfig() {
+  const url = document.getElementById('cfgDbUrl').value.trim();
+  const key = document.getElementById('cfgApiKey').value.trim();
+  const pid = document.getElementById('cfgProjectId').value.trim();
+  if (!url || !key || !pid) { showCfgError("Fill in all three fields."); return; }
+  const conf = { databaseURL: url, apiKey: key, projectId: pid, appId: "1:0:web:0" };
+  localStorage.setItem(LS_KEY, JSON.stringify(conf));
+  initFirebase(conf);
+}
+
+function showCfgError(msg) {
+  const el = document.getElementById('cfgError');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+function initFirebase(conf) {
+  try {
+    if (!firebase.apps.length) {
+      firebase.initializeApp({ ...conf, authDomain: conf.projectId + ".firebaseapp.com" });
+    }
+    db = firebase.database();
+    document.getElementById('configScreen').style.display = 'none';
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    startListeners();
+  } catch(e) {
+    showCfgError("Could not connect: " + e.message);
+  }
+}
+
+function startListeners() {
+  db.ref('formals/cfg').on('value', snap => {
+    appState.cfg = snap.val();
+    renderCurrentTab();
+    updateHeader();
+  });
+  db.ref('formals/sigs').on('value', snap => {
+    const val = snap.val();
+    appState.sigs = val ? Object.entries(val).map(([id,v]) => ({...v,id})) : [];
+    appState.sigs.sort((a,b) => a.ts - b.ts);
+    renderCurrentTab();
+  });
+}
+
+// ─── Tab routing ───
+let currentTab = 'status';
+function switchTab(name, btn) {
+  currentTab = name;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderCurrentTab();
+}
+function renderCurrentTab() {
+  if (currentTab === 'status') renderStatus();
+  else if (currentTab === 'signup') renderSignup();
+  else renderAdmin();
+  updateHeader();
+}
+
+function updateHeader() {
+  const {cfg, sigs} = appState;
+  if (!cfg) { document.getElementById('headerSub').textContent = 'Admin setup required'; return; }
+  if (cfg.done) { document.getElementById('headerSub').textContent = 'All done!'; return; }
+  document.getElementById('headerSub').textContent = 'Now signing up: ' + cfg.pcs[cfg.activeIdx];
+}
+
+// ─── Helpers ───
+function houseUsed(house) {
+  return appState.sigs.filter(s => s.house === house).reduce((a,s) => a + s.count, 0);
+}
+function pct(used, cap) { return Math.min(100, Math.round(used/cap*100)); }
+function totalPeople() { return appState.sigs.reduce((a,s) => a + s.count, 0); }
+
+function el(id) { return document.getElementById(id); }
+function html(id, h) { el(id).innerHTML = h; }
+
+// ─── STATUS TAB ───
+function renderStatus() {
+  const {cfg, sigs} = appState;
+  const tc = el('tabContent');
+  if (!cfg) {
+    tc.innerHTML = `<div class="card" style="text-align:center;padding:28px 16px;color:var(--muted)">Waiting for admin to start signup…</div>`;
+    return;
+  }
+
+  let out = '';
+
+  // Active banner
+  if (!cfg.done) {
+    out += `<div class="banner banner-amber">🏠 Now signing up: <strong>${cfg.pcs[cfg.activeIdx]}</strong></div>`;
+  } else {
+    out += `<div class="banner banner-green">✓ All PCs signed up! Total: ${totalPeople()} people</div>`;
+  }
+
+  // Houses
+  out += `<div class="section-label">Houses</div>`;
+  cfg.houses.forEach(h => {
+    const used = houseUsed(h.name);
+    const rem = h.cap - used;
+    const p = pct(used, h.cap);
+    const cls = p >= 100 ? 'full' : p >= 75 ? 'low' : 'ok';
+    out += `<div class="card" style="padding:11px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span style="font-weight:600;font-size:14px">${h.name}</span>
+        <span class="spots-${cls === 'full' ? 'full' : cls === 'low' ? 'low' : 'ok'}" style="font-size:13px;font-weight:600">
+          ${rem <= 0 ? 'Full' : rem + ' left'}<span style="color:var(--muted);font-weight:400;font-size:12px"> / ${h.cap}</span>
+        </span>
+      </div>
+      <div class="bar-wrap"><div class="bar bar-${cls}" style="width:${p}%"></div></div>
+    </div>`;
+  });
+
+  // PC queue
+  out += `<div class="section-label">PC queue</div>`;
+  cfg.pcs.forEach((pc, i) => {
+    const status = i < cfg.activeIdx ? 'done' : (i === cfg.activeIdx && !cfg.done) ? 'active' : 'wait';
+    const pcSigs = sigs.filter(s => s.pc === pc);
+    const pcTotal = pcSigs.reduce((a,s) => a+s.count, 0);
+    const tag = pcTotal > 0 ? pcSigs.map(s => `${s.count}→${s.house.replace('House ','')}`).join(', ') + ` (${pcTotal}p)` : '';
+    out += `<div class="pc-item${status === 'active' ? ' is-active' : status === 'done' ? ' is-done' : ''}">
+      <div><span class="dot dot-${status === 'active' ? 'active' : status === 'done' ? 'done' : 'wait'}"></span>${pc}</div>
+      ${tag ? `<div class="pc-tag">${tag}</div>` : ''}
+    </div>`;
+  });
+
+  out += `<div class="sync-note">Live — updates automatically</div>`;
+  tc.innerHTML = out;
+}
+
+// ─── SIGNUP TAB ───
+let signupState = { pc: '', house: '', name: '', dateName: '', pcConfirm: '' };
+
+function renderSignup() {
+  const {cfg} = appState;
+  const tc = el('tabContent');
+  if (!cfg || !cfg.started) {
+    tc.innerHTML = `<div class="card" style="text-align:center;padding:28px;color:var(--muted)">Signup hasn't started yet.</div>`;
+    return;
+  }
+  if (cfg.done) {
+    tc.innerHTML = `<div class="card" style="text-align:center;padding:28px"><div style="color:var(--green);font-weight:600">All PCs have signed up!</div></div>`;
+    return;
+  }
+
+  const active = cfg.pcs[cfg.activeIdx];
+
+  let out = `<div class="card">`;
+
+  // PC select
+  out += `<span class="label">Your PC</span>
+  <select id="sPC" onchange="signupState.pc=this.value;renderSignup()">
+    <option value="">Select your PC…</option>
+    ${cfg.pcs.map(pc => `<option value="${pc}"${signupState.pc===pc?' selected':''}>${pc}</option>`).join('')}
+  </select>`;
+
+  // Turn check
+  if (signupState.pc && signupState.pc !== active) {
+    out += `<div class="msg msg-error">It's not ${signupState.pc}'s turn yet — currently: <strong>${active}</strong></div>`;
+    out += `</div>`;
+    tc.innerHTML = out;
+    return;
+  }
+
+  if (signupState.pc === active) {
+    out += `<div class="banner banner-amber" style="margin-top:12px">It's ${active}'s turn!</div>`;
+
+    // PC confirmation question
+    out += `<span class="label">PC confirmation</span>
+    <input type="text" id="sPCConfirm" placeholder="Type your PC (e.g. Fall 2022) to confirm" value="${signupState.pcConfirm}" oninput="signupState.pcConfirm=this.value" />`;
+
+    // Name
+    out += `<span class="label">Your name</span>
+    <input type="text" id="sName" placeholder="First Last" value="${signupState.name}" oninput="signupState.name=this.value" />`;
+
+    // Date name
+    out += `<span class="label">Date's name <span style="font-weight:400;opacity:0.6;text-transform:none">(leave blank if going stag)</span></span>
+    <input type="text" id="sDate" placeholder="First Last" value="${signupState.dateName}" oninput="signupState.dateName=this.value" />`;
+
+    // House
+    out += `<span class="label">Choose a house</span>
+    <div class="house-grid">`;
+    cfg.houses.forEach(h => {
+      const used = houseUsed(h.name);
+      const rem = h.cap - used;
+      const full = rem <= 0;
+      const cls = full ? 'full' : rem < 5 ? 'low' : 'ok';
+      out += `<button class="house-btn${signupState.house===h.name?' selected':''}" ${full?'disabled':''} onclick="signupState.house='${h.name}';renderSignup()">
+        <span class="hname">${h.name}</span>
+        <span class="hcap spots-${cls}">${full ? 'Full' : rem + ' spot' + (rem===1?'':'s') + ' left'}</span>
+      </button>`;
+    });
+    out += `</div>`;
+
+    out += `<div id="signupMsg"></div>`;
+    out += `<button class="btn btn-dark" onclick="submitSignup()">Submit</button>`;
+  }
+
+  out += `</div>`;
+  tc.innerHTML = out;
+}
+
+function submitSignup() {
+  const {cfg} = appState;
+  const {pc, house, name, dateName, pcConfirm} = signupState;
+  const msgEl = el('signupMsg');
+
+  const err = msg => { msgEl.innerHTML = `<div class="msg msg-error">${msg}</div>`; };
+
+  if (!pc) { err('Select your PC.'); return; }
+  if (pc !== cfg.pcs[cfg.activeIdx]) { err("It's not your turn yet."); return; }
+  if (pcConfirm.trim().toLowerCase() !== pc.toLowerCase()) { err('PC confirmation doesn't match. Type exactly: ' + pc); return; }
+  if (!name.trim()) { err('Enter your name.'); return; }
+  if (!house) { err('Select a house.'); return; }
+
+  const houseObj = cfg.houses.find(h => h.name === house);
+  const used = houseUsed(house);
+  const count = dateName.trim() ? 2 : 1;
+
+  if (used + count > houseObj.cap) {
+    err(`Not enough spots in ${house}. Only ${houseObj.cap - used} left.`); return;
+  }
+
+  const sig = { pc, house, name: name.trim(), dateName: dateName.trim(), count, ts: Date.now() };
+  db.ref('formals/sigs').push(sig).then(() => {
+    signupState = { pc: '', house: '', name: '', dateName: '', pcConfirm: '' };
+    msgEl.innerHTML = `<div class="msg msg-success">Done! Reserved ${count} spot${count>1?'s':''} in ${house}.</div>`;
+    setTimeout(renderSignup, 2000);
+  }).catch(e => err('Error: ' + e.message));
+}
+
+// ─── ADMIN TAB ───
+let adminSetupMode = false;
+let setupHouses = [
+  {id:'A',name:'House 1',cap:22},
+  {id:'B',name:'House 2',cap:22},
+  {id:'C',name:'House 3',cap:22},
+  {id:'D',name:'House 4',cap:22},
+  {id:'E',name:'House 5',cap:22},
+];
+const ALL_PCS = ['Fall 2022','Spring 2023','Fall 2023','Spring 2024','Fall 2024','Spring 2025','Fall 2025'];
+let setupPCs = ALL_PCS.map(n => ({name:n,on:true}));
+
+function renderAdmin() {
+  const {cfg, sigs} = appState;
+  const tc = el('tabContent');
+
+  if (!cfg || adminSetupMode) {
+    renderSetup(tc); return;
+  }
+
+  const active = cfg.done ? null : cfg.pcs[cfg.activeIdx];
+  const next = (!cfg.done && cfg.activeIdx+1 < cfg.pcs.length) ? cfg.pcs[cfg.activeIdx+1] : null;
+  const tp = totalPeople();
+
+  let out = '';
+
+  if (cfg.done) {
+    out += `<div class="banner banner-green">✓ All done! ${tp} people signed up.</div>`;
+  } else {
+    out += `<div class="banner banner-amber">Active: <strong>${active}</strong> &nbsp;·&nbsp; ${cfg.activeIdx+1}/${cfg.pcs.length}</div>
+    <button class="btn btn-green" onclick="advancePC()">
+      ${next ? `Mark done — open ${next}` : 'Close signup (all done)'}
+    </button>`;
+  }
+
+  out += `<button class="btn btn-outline" style="margin-top:8px" onclick="adminSetupMode=true;renderAdmin()">Edit setup</button>`;
+
+  // Signups by house
+  out += `<div class="section-label">All signups <span class="total-badge">${tp} people</span></div>`;
+  if (sigs.length === 0) {
+    out += `<div style="font-size:13px;color:var(--muted);padding:4px 0">No signups yet.</div>`;
+  } else {
+    cfg.houses.forEach(h => {
+      const hs = sigs.filter(s => s.house === h.name);
+      if (!hs.length) return;
+      const tot = hs.reduce((a,s) => a+s.count, 0);
+      out += `<div class="card" style="padding:11px 14px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-weight:600;font-size:14px">${h.name}</span>
+          <span style="font-size:12px;color:var(--muted)">${tot}/${h.cap}</span>
+        </div>`;
+      hs.forEach(s => {
+        out += `<div class="sig-row">
+          <div class="sig-info">
+            <span class="sig-pc">${s.pc}</span>
+            <span class="sig-detail"> · ${s.name}${s.dateName ? ' + ' + s.dateName : ' (stag)'}</span>
+          </div>
+          <button class="del-btn" onclick="deleteSig('${s.id}')">×</button>
+        </div>`;
+      });
+      out += `</div>`;
+    });
+  }
+
+  out += `<hr>`;
+  out += `<button class="btn btn-red-outline" onclick="if(confirm('Clear all signups?'))clearSigs()">Clear all signups</button>`;
+  out += `<button class="btn btn-red-outline" style="margin-top:6px;opacity:0.7" onclick="fullReset()">Full reset</button>`;
+
+  tc.innerHTML = out;
+}
+
+function renderSetup(tc) {
+  let out = `<div class="card">
+    <div class="section-label" style="margin-top:0">House names &amp; capacities</div>`;
+
+  setupHouses.forEach((h, i) => {
+    out += `<div class="setup-row">
+      <input type="text" value="${h.name}" oninput="setupHouses[${i}].name=this.value" placeholder="House name" />
+      <input type="text" class="setup-cap" value="${h.cap}" oninput="setupHouses[${i}].cap=parseInt(this.value)||0" placeholder="Cap" />
+    </div>`;
+  });
+
+  out += `<div class="section-label">Which PCs are attending? (oldest → newest)</div>`;
+  setupPCs.forEach((pc, i) => {
+    out += `<div class="checkbox-row">
+      <input type="checkbox" id="pc${i}" ${pc.on?'checked':''} onchange="setupPCs[${i}].on=this.checked" />
+      <label for="pc${i}">${pc.name}</label>
+    </div>`;
+  });
+
+  out += `<div id="setupMsg"></div>`;
+  out += `<button class="btn btn-dark" onclick="saveSetup()">${appState.cfg ? 'Save &amp; restart' : 'Start signup'}</button>`;
+  if (appState.cfg) out += `<button class="btn btn-outline" onclick="adminSetupMode=false;renderAdmin()">Cancel</button>`;
+  out += `</div>`;
+  tc.innerHTML = out;
+}
+
+function saveSetup() {
+  const pcs = setupPCs.filter(p => p.on).map(p => p.name);
+  if (!pcs.length) { el('setupMsg').innerHTML = `<div class="msg msg-error">Select at least one PC.</div>`; return; }
+  const cfg = { houses: setupHouses.map(h => ({...h})), pcs, activeIdx: 0, started: true, done: false };
+  db.ref('formals/cfg').set(cfg);
+  db.ref('formals/sigs').remove();
+  adminSetupMode = false;
+}
+
+function advancePC() {
+  const {cfg} = appState;
+  if (!cfg) return;
+  const next = cfg.activeIdx + 1;
+  if (next >= cfg.pcs.length) db.ref('formals/cfg').update({activeIdx: next, done: true});
+  else db.ref('formals/cfg').update({activeIdx: next});
+}
+
+function deleteSig(id) {
+  db.ref('formals/sigs/' + id).remove();
+}
+
+function clearSigs() { db.ref('formals/sigs').remove(); }
+
+function fullReset() {
+  if (!confirm('Reset everything?')) return;
+  db.ref('formals').remove();
+  localStorage.removeItem(LS_KEY);
+  location.reload();
+}
+
+// ─── Boot ───
+window.onload = () => {
+  const saved = getSavedConfig();
+  if (saved && saved.databaseURL && saved.apiKey) {
+    document.getElementById('loadingScreen').style.display = 'block';
+    initFirebase(saved);
+  } else {
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('configScreen').style.display = 'block';
+  }
+};
+</script>
+</body>
+</html>
